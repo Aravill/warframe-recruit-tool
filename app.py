@@ -35,7 +35,7 @@ class Renderer:
         print("Recruits total: " + bcolors.OKCYAN + str(len(self.status.user_list)) + bcolors.ENDC)
 
 # -- FILE HANDLING --
-class FileHandler:
+class LogFileHandler:
     def __init__(self, file_path, separator, status):
         self.separator = separator
         self.status = status
@@ -58,7 +58,11 @@ class FileHandler:
             self.f.close()  
 
     def update_records(self):
-        self.f = open(self.file_path, "w+")
+        try:
+            self.f = open(self.file_path, "w+")
+        except:
+            print(bcolors.FAIL + "Failed to load the log file directory, please check the directory exists: " + log_dir + bcolors.ENDC)
+            quit()
         result = ""
         for r in self.status.user_list:
             result = result + r.date + "	" + r.username + "\n"
@@ -87,6 +91,20 @@ class Status:
         self.user_list = records
 
 # -- HELPER FUNCTIONS --
+def generate_default_config(config):
+    config["general"] = {
+        "tesseract_directory": r"C:\Program Files\Tesseract-OCR\tesseract",
+        "recruit_log_directory": "logs"
+    }
+    config["keybinds"] = {
+        "get_username":"<alt>+1",
+        "search_in_discord":"<alt>+2",
+        "register_recruit":"<alt>+3",
+        "open_session_file":"<alt>+4",
+        "refresh":"<alt>+r",
+        "exit":"<alt>+q"
+    }
+
 def ctrl_keybind(key):
     pyautogui.keyDown('ctrl')
     time.sleep(.1)
@@ -121,16 +139,43 @@ def more_readable_image(image):
 
 def recognize_text(image):
     pytesseract.pytesseract.tesseract_cmd = r""+tesseract_dir
-    return pytesseract.image_to_string(more_readable_image(image)).strip()
+    try:
+        return pytesseract.image_to_string(more_readable_image(image)).strip()
+    except:
+        print(bcolors.FAIL + "Failed to launch tesseract, please check your installation directory: " + tesseract_dir + bcolors.ENDC)
+        quit()
+
+# -- LOADING CONFIG --
+# Attempt to load if file exists, otherwise generate new one
+config = configparser.ConfigParser()
+if path.exists("config.ini"):
+    config.read("config.ini")
+else:
+    generate_default_config(config)
+    f = open("config.ini", "w")
+    config.write(f)
+    f.close()
+
+# Reading recruit log directory
+log_dir = config['general']['recruit_log_directory']
+log_file_name = "recruiting_" + friendly_date().replace("/", "-") + ".txt"
+# Reading tessecart directory and loading tesseract
+tesseract_dir = config['general']['tesseract_directory']
+try:
+    pytesseract.pytesseract.tesseract_cmd = r""+tesseract_dir
+except:
+    print(bcolors.FAIL + "Failed to load tesseract, please check your installation directory: " + tesseract_dir + bcolors.ENDC)
+    quit()
 
 # -- PUBLIC VARIABLES --
+# Loading in the image
 template = cv2.imread('assets/template.png', cv2.IMREAD_UNCHANGED)
 stat = Status()
 rend = Renderer(stat)
-session_file_name = "recruiting_" + friendly_date().replace("/", "-") + ".txt"
 separator = "	"
-fhnd = FileHandler(session_file_name, separator, stat)
-rend.refresh()
+
+fhnd = LogFileHandler(path.join(log_dir, log_file_name), separator, stat)
+rend.refresh()    
 
 # -- TRIGGER FUNCTIONS --
 def async_search_in_discord():
@@ -154,7 +199,10 @@ def the_end():
 
 # -- MAIN LOGIC --
 def open_session_file():
-    subprocess.Popen(["notepad.exe", session_file_name])
+    try:
+        subprocess.Popen(["notepad.exe", path.join(log_dir, log_file_name)])
+    except:
+        print(bcolors.FAIL + "Failed to open the log file directory, please check the file exists: " + path.join(log_dir, log_file_name) + bcolors.ENDC)
 
 def search_in_discord():
     windowsapps.open_app('Discord')
@@ -222,10 +270,6 @@ def get_username():
     rend.refresh()
     playsound('assets/sound.mp3')
 
-# -- READING CONFIG --
-config = configparser.ConfigParser()
-config.read('config.ini')
-
 # Reading keybinds
 function_map = {
     "get_username": async_get_username,
@@ -239,10 +283,6 @@ keybinds = {}
 for kb in config['keybinds']:
         keybinds[config['keybinds'][kb]] = function_map[kb] 
 
-# Reading tessecart directory
-tesseract_dir = config['general']['tesseract_directory']
-
 # -- HOTKEY REGISTRATION --
-
 with keyboard.GlobalHotKeys(keybinds) as h:
     h.join()
