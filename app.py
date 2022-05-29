@@ -9,7 +9,7 @@ import threading
 from datetime import date
 from os import system, path
 from playsound import playsound
-import numpy as np
+import subprocess
 
 # -- CLI HANDLING --
 class bcolors:
@@ -138,6 +138,9 @@ rend.refresh()
 
 # -- TRIGGER FUNCTIONS --
 
+def async_open_session_file():
+    threading.Thread(target=open_session_file).start()
+
 def async_get_username():
     threading.Thread(target=get_username).start()
 
@@ -152,6 +155,9 @@ def the_end():
     quit()
 
 # -- MAIN LOGIC --
+def open_session_file():
+    subprocess.Popen(["notepad.exe", session_file_name])
+
 def search_in_discord():
     win = win32gui.FindWindow(None, "Discord")
     win32gui.SetForegroundWindow(win)
@@ -212,6 +218,7 @@ with keyboard.GlobalHotKeys({
         '<alt>+1': async_get_username,
         # '<alt>+2': async_search_in_discord,
         '<alt>+2': async_register_recruit,
+        '<alt>+3': async_open_session_file,
         # '<alt>+e': test,
         '<alt>+r': async_refresh,
         '<alt>+q': the_end}) as h:
