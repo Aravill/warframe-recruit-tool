@@ -1,3 +1,5 @@
-*.txt
 assets/ss.jpg
-logs/*
+logs
+build
+releases
+dist
