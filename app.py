@@ -1,11 +1,5 @@
-from time import time
-import pytesseract
-import cv2
-import pyperclip
-import pyautogui
+import pytesseract, cv2, pyperclip, pyautogui, threading, subprocess, windowsapps, time, configparser
 from pynput import keyboard
-import win32gui
-import threading
 from datetime import date
 from os import system, path
 from playsound import playsound
@@ -26,7 +20,6 @@ class bcolors:
 class Renderer:
     def __init__(self, status):
         self.status = status
-        self.refresh()
 
     def refresh(self):
         system("cls")
@@ -83,7 +76,6 @@ class Record:
 class Status:
     def __init__(self):
         self.current_user = ""
-        self.previous_user = ""
         self.user_list = []
 
     def append_user(self, username, date):
@@ -94,10 +86,15 @@ class Status:
 
     def populate_list(self, records):
         self.user_list = records
-        # for r in records:
-        #     self.append_user(r.username, r.date)
 
 # -- HELPER FUNCTIONS --
+def ctrl_keybind(key):
+    pyautogui.keyDown('ctrl')
+    time.sleep(.1)
+    pyautogui.press(key)
+    time.sleep(.1)
+    pyautogui.keyUp('ctrl')
+
 def ss_and_read():
     ss = pyautogui.screenshot()
     ss.save(r'assets/ss.jpg')
@@ -124,11 +121,25 @@ def more_readable_image(image):
     return inv
 
 def recognize_text(image):
-    pytesseract.pytesseract.tesseract_cmd = r'E:\Program Files\Tesseract-OCR\tesseract'
+    pytesseract.pytesseract.tesseract_cmd = r""+tesseract_dir
     return pytesseract.image_to_string(more_readable_image(image)).strip()
 
+# -- READING CONFIG --
+config = configparser.ConfigParser()
+config.read('config.ini')
+# Reading keybinds
+keybinds = {}
+for kb in config['keybinds']:
+    if kb == "exit":
+        keybinds[config['keybinds'][kb]] = "the_end"
+    else:
+        keybinds[config['keybinds'][kb]] = "async_" + kb
+
+# Reading tessecart directory
+tesseract_dir = config['general']['tesseract_directory']
+
 # -- PUBLIC VARIABLES --
-template = cv2.imread('assets/template3.png', cv2.IMREAD_UNCHANGED)
+template = cv2.imread('assets/template.png', cv2.IMREAD_UNCHANGED)
 stat = Status()
 rend = Renderer(stat)
 session_file_name = "recruiting_" + friendly_date().replace("/", "-") + ".txt"
@@ -137,6 +148,8 @@ fhnd = FileHandler(session_file_name, separator, stat)
 rend.refresh()
 
 # -- TRIGGER FUNCTIONS --
+def async_search_in_discord():
+    threading.Thread(target=search_in_discord).start()
 
 def async_open_session_file():
     threading.Thread(target=open_session_file).start()
@@ -159,13 +172,24 @@ def open_session_file():
     subprocess.Popen(["notepad.exe", session_file_name])
 
 def search_in_discord():
-    win = win32gui.FindWindow(None, "Discord")
-    win32gui.SetForegroundWindow(win)
+    windowsapps.open_app('Discord')
+    # Give discord enough time to pop up
+    time.sleep(1)
+    # Open search bar
+    ctrl_keybind('f')
+    # Delete channel filter
+    ctrl_keybind('a')
+    pyautogui.press('backspace')   
+    # Ensure current user in clipboard
+    pyperclip.copy(stat.current_user)
+    # Paste username
+    ctrl_keybind('v')
+    # Search
+    pyautogui.press('enter')
 
 def refresh():
     stat.populate_list(fhnd.read_records())
     rend.refresh()
-    playsound('assets/sound.mp3')
 
 def register_recruit():
     f_date = friendly_date()
@@ -219,6 +243,7 @@ with keyboard.GlobalHotKeys({
         # '<alt>+2': async_search_in_discord,
         '<alt>+2': async_register_recruit,
         '<alt>+3': async_open_session_file,
+        '<alt>+4': async_search_in_discord,
         # '<alt>+e': test,
         '<alt>+r': async_refresh,
         '<alt>+q': the_end}) as h:
