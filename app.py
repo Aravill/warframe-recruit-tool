@@ -124,20 +124,6 @@ def recognize_text(image):
     pytesseract.pytesseract.tesseract_cmd = r""+tesseract_dir
     return pytesseract.image_to_string(more_readable_image(image)).strip()
 
-# -- READING CONFIG --
-config = configparser.ConfigParser()
-config.read('config.ini')
-# Reading keybinds
-keybinds = {}
-for kb in config['keybinds']:
-    if kb == "exit":
-        keybinds[config['keybinds'][kb]] = "the_end"
-    else:
-        keybinds[config['keybinds'][kb]] = "async_" + kb
-
-# Reading tessecart directory
-tesseract_dir = config['general']['tesseract_directory']
-
 # -- PUBLIC VARIABLES --
 template = cv2.imread('assets/template.png', cv2.IMREAD_UNCHANGED)
 stat = Status()
@@ -237,14 +223,27 @@ def get_username():
     rend.refresh()
     playsound('assets/sound.mp3')
 
+# -- READING CONFIG --
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+# Reading keybinds
+function_map = {
+    "get_username": async_get_username,
+    "search_in_discord": async_search_in_discord,
+    "register_recruit": async_register_recruit,
+    "open_session_file": async_open_session_file,
+    "refresh": async_refresh,
+    "exit": the_end
+}
+keybinds = {}
+for kb in config['keybinds']:
+        keybinds[config['keybinds'][kb]] = function_map[kb] 
+
+# Reading tessecart directory
+tesseract_dir = config['general']['tesseract_directory']
+
 # -- HOTKEY REGISTRATION --
-with keyboard.GlobalHotKeys({
-        '<alt>+1': async_get_username,
-        # '<alt>+2': async_search_in_discord,
-        '<alt>+2': async_register_recruit,
-        '<alt>+3': async_open_session_file,
-        '<alt>+4': async_search_in_discord,
-        # '<alt>+e': test,
-        '<alt>+r': async_refresh,
-        '<alt>+q': the_end}) as h:
+
+with keyboard.GlobalHotKeys(keybinds) as h:
     h.join()
