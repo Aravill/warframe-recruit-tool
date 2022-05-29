@@ -22,7 +22,7 @@ No, the tool doesn't interact with Warframe or its code in any way, it simply ta
 
 In order for this tool to work, you will need to install Tesseract, this is the OCR software behind the username recognition. Download Tesseract [here](https://github.com/UB-Mannheim/tesseract/wiki).
 
-### Recruiting Tool
+### Recruiting tool
 
 Download the latest recruiting tool release from this repository's releases page [here](https://github.com/Aravill/warframe-recruit-tool/releases). Unzip it using 7zip or WinRar, then open the `config.ini` file and adjust `tesseract_directory` path depending on where you installed Tesseract. You may also adjust the log file directory (by default it is `logs` inside the root application directory) or the application keybinds. Then launch the application by double clicking the `app.exe` executable.
 
@@ -40,7 +40,7 @@ The main reason this tool was created. Warframe doesn't offer a username copy fe
 
 Once the username is in the clipboard, the tool can "alt tab" to a running discord instance and attempt to look the username up in the active server (or DMs). In order for this feature to work properly, the "Pantsgrab Parade" server **must be active**. The tool cannot switch between servers or DMs.
 
-### Username registration
+### Session recruitment log
 
 Once the user is recruited, the tool can log the user as recruited into a simple text log file, allowing the recruiter to go on and recruit more people without the need to register the user into the Darkstar Gladiators recruitment sheet right away. The text file is also formatted in a way that allows a convenient copy-paste from the log into the sheet later once the recruitment session is over. Once the username is saved, the tool plays a notification sound.
 
@@ -48,25 +48,21 @@ Once the user is recruited, the tool can log the user as recruited into a simple
 
 If any adjustment to the log needs to be made (for example the tool made an error in the username), the tool can open the session log in the notepad text editor to allow for quick adjustment.
 
-### Refreshing the log inside the tool
+### Refreshing the session recruitment log
 
 If the session log file was edited, it is necessary to refresh the tool to see the new values in it.
 
-## Tool Configuration
+## Tool configuration
 
 Some features of the recruiting tool are configurable. All configurable variables are stored in the `config.ini` file. If the file is deleted, the tool will create a new one on startup.
 
-### Tesseract Directory
+### Tesseract directory
 
 The tool uses Tesseract, an OCR software, to recognize usernames on an image. Adjust the `tesseract_directory` variable to point to Tesseract's installation directory.
 
-### Log Directory
+### Log directory
 
 This is the directory where the tool will create recruiting session logs containing the usernames of recruited players. By default, this is the `logs` directory in the application directory. You may change this using the `recruit_log_directory` variable
-
-### Example
-
-![Alt text](/assets/example.png?raw=true "Example")
 
 ### Keybinds
 
@@ -80,3 +76,7 @@ alt+4: open recruitment log file
 alt+r: refresh recruitment log
 alt+q: exit tool
 ```
+
+## Example
+
+![Alt text](/assets/example.png?raw=true "Example")
