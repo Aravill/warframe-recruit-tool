@@ -1,9 +1,8 @@
-import pytesseract, cv2, pyperclip, pyautogui, threading, subprocess, windowsapps, time, configparser
+import pytesseract, cv2, pyperclip, pyautogui, threading, subprocess, windowsapps, time, configparser, subprocess
 from pynput import keyboard
 from datetime import date
 from os import system, path
 from playsound import playsound
-import subprocess
 
 # -- CLI HANDLING --
 class bcolors:
