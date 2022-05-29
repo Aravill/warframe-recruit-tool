@@ -137,8 +137,6 @@ fhnd = FileHandler(session_file_name, separator, stat)
 rend.refresh()
 
 # -- TRIGGER FUNCTIONS --
-# def async_search_in_discord():
-#     threading.Thread(target=search_in_discord).start()
 
 def async_get_username():
     threading.Thread(target=get_username).start()
@@ -155,7 +153,6 @@ def the_end():
 
 # -- MAIN LOGIC --
 def search_in_discord():
-    # print("hello world")
     win = win32gui.FindWindow(None, "Discord")
     win32gui.SetForegroundWindow(win)
 
@@ -166,7 +163,6 @@ def refresh():
 
 def register_recruit():
     f_date = friendly_date()
-    # username = pyperclip.paste()
     username = stat.current_user
     stat.append_user(username, f_date)
     rend.refresh()
@@ -182,9 +178,6 @@ def get_username():
     alpha = template[:,:,3]
     alpha = cv2.merge([alpha,alpha,alpha])
 
-    # methods = [cv2.TM_CCORR_NORMED, cv2.TM_CCORR, cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
-    # for method in methods:
-
     # Copy image and look for a match
     img2 = img.copy()
     match = cv2.matchTemplate(img2, active_box_template, cv2.TM_CCORR_NORMED, mask=alpha)
@@ -192,10 +185,6 @@ def get_username():
     # Match results
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
 
-    # Get top left of match
-    # if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
-    #     top_left = min_loc
-    # else:
     top_left = max_loc
 
     i = 0
@@ -203,30 +192,13 @@ def get_username():
     pointer = (top_left[1] + offset, top_left[0] + offset + i, 2)
     while img2[pointer] > 60:
         i += 1
-        # pointer = (top_left[0] + offset + i, top_left[1] + offset)
         pointer = (top_left[1] + offset, top_left[0] + offset + i, 2)
-        # print(img2[pointer])
 
     # Get bottom right
     bottom_right = (pointer[1], top_left[1] + h)
-    # cv2.rectangle(img2, top_left, bottom_right, 255, 1)
-
-    # Show full image
-    # cv2.imshow('Match', img2)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows
-
-    # print(top_left)
-    # print(bottom_right)
 
     # Crop (playing with pixels here to remove the shading on the chat box edge)
     cropped_image = img2[top_left[1]+2:bottom_right[1]-2, top_left[0]+2:bottom_right[0]-2]
-    # cv2.imshow('Cropped', cropped_image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows
-
-    #Save
-    # cv2.imwrite("name.jpg", cropped_image)
 
     #Image recognition part
     name = recognize_text(cropped_image)
