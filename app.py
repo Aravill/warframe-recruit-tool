@@ -274,8 +274,7 @@ def get_username():
             continue
 
         # cv2.rectangle(img2, top_left, bottom_right, 255, 4)
-        cv2.imwrite('square.png', img2)
-        cv2.imwrite('after-crop.png', cropped_image)
+
         #Image recognition part
         name = recognize_text(cropped_image)
 
