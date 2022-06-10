@@ -1,4 +1,5 @@
-import pytesseract, cv2, pyperclip, pyautogui, threading, subprocess, windowsapps, time, configparser, subprocess
+import cv2, pyperclip, pyautogui, threading, subprocess, windowsapps, time, configparser, subprocess
+import pytesseract
 from pynput import keyboard
 from datetime import date
 from os import system, path
@@ -138,7 +139,6 @@ def more_readable_image(image):
     return inv
 
 def recognize_text(image):
-    pytesseract.pytesseract.tesseract_cmd = r""+tesseract_dir
     try:
         return pytesseract.image_to_string(more_readable_image(image)).strip()
     except:
@@ -243,28 +243,53 @@ def get_username():
 
     # Copy image and look for a match
     img2 = img.copy()
-    match = cv2.matchTemplate(img2, active_box_template, cv2.TM_CCORR_NORMED, mask=alpha)
+    methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR, cv2.TM_CCORR_NORMED]
+    
+    found = False
+    mi = 0
+    name = ""
+    while found == False and mi < len(methods):
+        # print("using method %d", mi)
+        match = cv2.matchTemplate(img2, active_box_template, methods[mi], mask=alpha)
+        # Match results
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
+        top_left = max_loc
 
-    # Match results
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
-
-    top_left = max_loc
-
-    i = 0
-    offset = 1
-    pointer = (top_left[1] + offset, top_left[0] + offset + i, 2)
-    while img2[pointer] > 60:
-        i += 1
+        i = 0
+        offset = 1
         pointer = (top_left[1] + offset, top_left[0] + offset + i, 2)
+        while img2[pointer] > 60:
+            i += 1
+            pointer = (top_left[1] + offset, top_left[0] + offset + i, 2)
 
-    # Get bottom right
-    bottom_right = (pointer[1], top_left[1] + h)
+        # Get bottom right
+        bottom_right = (pointer[1], top_left[1] + h)
+        # Crop (playing with pixels here to remove the shading on the chat box edge)
+        cropped_image = img2[top_left[1]+2:bottom_right[1]-2, top_left[0]+2:bottom_right[0]-2]
 
-    # Crop (playing with pixels here to remove the shading on the chat box edge)
-    cropped_image = img2[top_left[1]+2:bottom_right[1]-2, top_left[0]+2:bottom_right[0]-2]
+        height, width = cropped_image.shape[:2]
+        if width < height * 1.3:
+            # Not recognized using current method
+            mi += 1
+            continue
 
-    #Image recognition part
-    name = recognize_text(cropped_image)
+        # cv2.rectangle(img2, top_left, bottom_right, 255, 4)
+        cv2.imwrite('square.png', img2)
+        cv2.imwrite('after-crop.png', cropped_image)
+        #Image recognition part
+        name = recognize_text(cropped_image)
+
+        if len(name) < 1:
+            # Not recognized using current method
+            mi += 1
+            continue
+
+        found = True
+    
+    if len(name) < 1:
+        print(bcolors.FAIL + "Username not recognized!" + bcolors.ENDC)
+        return
+
     pyperclip.copy(name)
     stat.update_current_user(name)
     rend.refresh()
